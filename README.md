@@ -1,6 +1,12 @@
 # surreal-lite-py
 An unofficial Python API for surrealDB that only has one dependency (websockets) and has a very simple interface. One interface is a blocking isolated query interface, and the other is an async connection pool interface.
 
+## Installation
+You can install the package using the following command:
+```bash
+pip install sdblpy
+```
+
 ## Async Connection Pool Interface
 You can spin up an async connection pool and make requests using the code below:
 ```python
