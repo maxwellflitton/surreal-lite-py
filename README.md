@@ -299,3 +299,5 @@ There isn't much, this is just a super simple API. The less moving parts the les
 - [ ] Auto-reconnect for Long-Lived Connections
 - [ ] Connection Retry Mechanism
 - [ ] Params testing and Documentation
+- [ ] CBOR data serialization
+- [ ] Native SurrealDB data types
