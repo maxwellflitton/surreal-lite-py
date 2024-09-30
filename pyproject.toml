@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sdblpy"
-version = "0.1.0"
+version = "0.2.0"
 description = "lite surrealDB client that only supports websocket raw queries and async pooled connections"
 authors = [
     { name = "Maxwell Flitton", email = "maxwellflitton@gmail.com" }
@@ -29,5 +29,5 @@ Homepage = "https://your.project.homepage"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-#[project.scripts]
-#migrations = "src.endpoints.migrations:main"
+[project.scripts]
+sdblpy = "sblpy.cli.entrypoint:main"

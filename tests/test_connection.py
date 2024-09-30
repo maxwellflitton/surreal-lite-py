@@ -18,6 +18,7 @@ class TestSurrealSyncConnection(TestCase):
     def tearDown(self):
         for query in self.queries:
             self.connection.query(query)
+        self.connection.socket.close()
 
     def test___init__(self):
         self.assertEqual(self.connection.url, "ws://localhost:8000/rpc")
@@ -56,6 +57,44 @@ class TestSurrealSyncConnection(TestCase):
         self.connection.query(
             "CREATE user:tobie SET name = 'Tobie'; CREATE user:jaime SET name = 'Jaime';"
         )
+        outcome = self.connection.query("SELECT * FROM user;")
+        self.assertEqual(len(outcome), 2)
+        self.assertEqual(
+            [{'id': 'user:jaime', 'name': 'Jaime'}, {'id': 'user:tobie', 'name': 'Tobie'}],
+            outcome
+        )
+
+    def test_context(self):
+        self.queries = ["DELETE user;"]
+        with self.connection as conn:
+            conn.query("CREATE user:tobie SET name = 'Tobie';")
+            conn.query("CREATE user:jaime SET name = 'Jaime';")
+            outcome = conn.query("SELECT * FROM user;")
+            self.assertEqual(len(outcome), 2)
+            self.assertEqual(
+                [{'id': 'user:jaime', 'name': 'Jaime'}, {'id': 'user:tobie', 'name': 'Tobie'}],
+                outcome
+            )
+
+        # asserting that the connection is closed
+        with self.assertRaises(Exception) as context:
+            conn.query("SELECT * FROM user;")
+        self.assertEqual(
+            "sent 1000 (OK); no close frame received",
+            str(context.exception)
+        )
+
+        # has to create another connection for the teardown
+        self.connection = SurrealSyncConnection(
+            "localhost",
+            8000,
+            "root",
+            "root"
+        )
+
+    def test_multi_one(self):
+        self.queries = ["DELETE user;"]
+        self.connection.query("CREATE user:tobie SET name = 'Tobie'; CREATE user:jaime SET name = 'Jaime';")
         outcome = self.connection.query("SELECT * FROM user;")
         self.assertEqual(len(outcome), 2)
         self.assertEqual(

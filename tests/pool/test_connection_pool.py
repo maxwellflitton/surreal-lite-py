@@ -1,8 +1,8 @@
 import asyncio
 from unittest import TestCase
 
-from src.sblpy.pool.connection_pool import execute_pooled_query, client_pool, NUM_CLIENTS, shutdown_pool
-from src.sblpy.query import Query
+from sblpy.pool.connection_pool import execute_pooled_query, client_pool, NUM_CLIENTS, shutdown_pool
+from sblpy.query import Query
 
 
 class TestConnectionPool(TestCase):

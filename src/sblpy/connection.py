@@ -37,7 +37,6 @@ class SurrealSyncConnection:
         """
         The constructor for the SurrealSyncConnection class.
 
-        :param host:
         :param host: (str) the url of the database to process queries for
         :param port: (int) the port that the database is listening on
         :param user: (str) the username to login on
@@ -46,6 +45,8 @@ class SurrealSyncConnection:
         :param database: (str) The database that the connection will stick to
         """
         self.url: str = f"ws://{host}:{port}/rpc"
+        self.host: str = host
+        self.port: int = port
         self.user: str = user
         self.password: str = password
         self.namespace: str = namespace
@@ -113,6 +114,19 @@ class SurrealSyncConnection:
             exc_value: The value of the exception.
             traceback: The traceback of the exception.
         """
+        self.socket.close()
+
+    def __enter__(self) -> "SurrealSyncConnection":
+        """No-op for entering the context manager since the connection is established during __init__."""
+        return self
+
+    def __exit__(
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType]
+    ) -> None:
+        """Closes the connection when exiting the context manager."""
         self.socket.close()
 
     @property
