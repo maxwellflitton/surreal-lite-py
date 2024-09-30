@@ -289,4 +289,13 @@ And with this we can run migrations directly in our python. For instance, it is 
 
 There isn't much, this is just a super simple API. The less moving parts the less that can go wrong. I want to keep the dependencies to a minimum and the codebase as simple as possible. However, I do want to add the following features:
 
-- [ ] Migration tool with command line interface
+- [ ] Schema Introspection
+- [ ] Connection Pool Monitoring
+- [ ] `Model` class for ORM like functionality
+- [ ] Query Builder
+- [ ] Connection pool monitoring
+- [ ] Query Execution Time Logging
+- [ ] Pagination Support for Large Datasets
+- [ ] Auto-reconnect for Long-Lived Connections
+- [ ] Connection Retry Mechanism
+- [ ] Params testing and Documentation
