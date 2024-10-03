@@ -22,7 +22,7 @@ class TestConnectionPool(TestCase):
                 "root",
                 number_of_clients=NUM_CLIENTS,
                 max_size=2**20,
-                encrypted=True
+                encrypted=False
             ))
             for _ in range(100):
                 _ = await execute_pooled_query(Query("CREATE user:tobie SET name = 'Tobie';"))
