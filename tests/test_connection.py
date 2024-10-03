@@ -12,7 +12,7 @@ class TestSurrealSyncConnection(TestCase):
             "localhost",
             8000,
             "root",
-            "root"
+            "root",
         )
 
     def tearDown(self):

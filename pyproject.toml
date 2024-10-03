@@ -4,24 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sdblpy"
-version = "0.2.0"
+version = "0.3.0"
 description = "lite surrealDB client that only supports websocket raw queries and async pooled connections"
 authors = [
     { name = "Maxwell Flitton", email = "maxwellflitton@gmail.com" }
 ]
 license = {text = "MIT License"}
 readme = "README.md"
-keywords = ["surrealdb", "lite"]
+keywords = ["surrealdb", "lite", "SurrealDB", "surrealDB", "Surrealdb"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent"
+    "Operating System :: OS Independent",
 ]
 dependencies = [
     "websockets == 13.1"
 ]
 
 [project.urls]
-Homepage = "https://your.project.homepage"
+Homepage = "https://github.com/maxwellflitton/surreal-lite-py"
 
 #[tool.setuptools]
 #packages = ["sdblpy"]

@@ -31,7 +31,9 @@ async def websocket_client(
         user: str,
         password: str,
         namespace: str = "default",
-        database: str = "default"
+        database: str = "default",
+        max_size: int = 2**20,
+        encrypted: bool = False
     ) -> None:
     """
     Spins up a websocket client in the async runtime as an actor.
@@ -43,11 +45,19 @@ async def websocket_client(
     :param password: (str) the password to login on
     :param namespace: (str) the namespace that the connection will stick to
     :param database: (str) The database that the connection will stick to
+    :param max_size: (int) The maximum size of the connection
+                           (however the pool connections cannot be updated, consider using
+                           individual connections that are to be discarded if you are expecting a large query)
+    :param encrypted: (bool) Whether the connection is encrypted (default is False, please ensure that server
+                             supports encryption with SSL certificates before setting to True)
     :return: None
     """
-    url: str = f"ws://{host}:{port}/rpc"
+    if encrypted is True:
+        url: str = f"wss://{host}:{port}/rpc"
+    else:
+        url: str = f"ws://{host}:{port}/rpc"
     id = str(uuid4())
-    async with websockets.connect(url) as websocket:
+    async with websockets.connect(url, max_size=max_size) as websocket:
         print(f"Client {client_id} connected to {url}")
         await setup_connection(websocket, id, user, password, namespace, database)
         while True:
@@ -73,7 +83,9 @@ async def client_pool(
         password: str,
         namespace: str = "default",
         database: str = "default",
-        number_of_clients: int = 5
+        number_of_clients: int = 5,
+        max_size: int = 2**20,
+        encrypted: bool = False
     ) -> None:
     """
     Spins up an async connection pool.
@@ -98,12 +110,17 @@ async def client_pool(
     :param namespace: (str) the namespace that the connections will stick to
     :param database: (str) The database that the connections will stick to
     :param number_of_clients: (int) the number of clients in the connection pool
+    :param max_size: (int) The maximum size of the connection
+                           (however the pool connections cannot be updated, consider using
+                           individual connections that are to be discarded if you are expecting a large query)
+    :param encrypted: (bool) Whether the connection is encrypted (default is False, please ensure that server
+                             supports encryption with SSL certificates before setting to True)
     :return: None
     """
     tasks = []
     for i in range(number_of_clients):
         tasks.append(asyncio.create_task(websocket_client(
-            i, host, port, user, password, namespace, database
+            i, host, port, user, password, namespace, database, max_size, encrypted
         )))
     await asyncio.gather(*tasks)
 

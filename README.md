@@ -6,6 +6,7 @@ An unofficial Python API for surrealDB that only has one dependency (websockets)
 - [Installation](#installation)
 - [Async Connection Pool Interface](#async-connection-pool-interface)
 - [Basic Blocking Interface](#basic-blocking-interface)
+- [Basic Async Interface](#basic-async-interface)
 - [Migrations via command line](#migrations-via-command-line)
 - [Run SQL scripts via command line](#run-sql-scripts-via-command-line)
 - [Command line parameters](#command-line-parameters)
@@ -34,7 +35,10 @@ async def main():
         port=8000,
         user="root",
         password="root",
-        number_of_clients=5
+        namespace="default", # if not provided the "default" namespace is used
+        database="default", # if not provided the "default" database is used
+        number_of_clients=5, # if not provided 5 clients are created
+        max_size=2**20 # if not provided the max size is 2**20 (1MB)
     ))
 
     # make 400 requests
@@ -52,7 +56,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-Here we can see that we pass in a `Query` object that defines the query and the params if they are also passed into the `Query` object constructor. If you print this you can also see that the response is raw. In the integration tests you can see how to parse this response using `response["result"][0]["result"]` This is because we do not want any serialization errors happening in the connection pool. You have control over how you handle the response. This can also help isolate against breaking changes in the future. 
+Here we can see that we pass in a `Query` object that defines the query and the params if they are also passed into the `Query` object constructor. If you print this you can also see that the response is raw. In the integration tests you can see how to parse this response using `response["result"][0]["result"]` This is because we do not want any serialization errors happening in the connection pool. You have control over how you handle the response. This can also help isolate against breaking changes in the future. It also must be noted that the connections in the connection pool cannot be reconfigured. Therefore if you are setting a large `max_size` parameter for the connections, that memory will be allocated for each connection for the lifetime of the connection pool. If you are expecting a one-off large query, it might be better to use a basic blocking or async interface as these connections are discarded after use.
 
 ## Basic Blocking Interface
 We can create a basic blocking interface using the code below:
@@ -61,9 +65,14 @@ from sblpy.connection import SurrealSyncConnection
 
 connection = SurrealSyncConnection(
             host="localhost",
-            port=8000,
+            port=8000,              # set to 433 if using encrypted connection
             user="root",
-            password="root"
+            password="root",
+            namespace="default",    # if not provided the "default" namespace is used
+            database="default",     # if not provided the "default" database is used
+            max_size=2**20,         # if not provided the max size is 2**20 (1MB),
+            encrypted=False         # default is False, please ensure that server
+                                    # supports encryption with SSL certificates before setting to True
         )
 
 _ = connection.query("CREATE user:tobie SET name = 'Tobie';")
@@ -74,9 +83,51 @@ print(outcome)
 
 Here you will see that the response is a lot smoother. This is because if there are any errors or issue with parsing, we can directly throw them as the connection is going to close anyway once the connection goes out of scope. The python garbage collector will take care of cleaning up the connection but this will be delayed. If you want to ensure that the connection is closed, you can call `connection.socket.close()` to close the connection.
 
-<!-- - [Migrations via command line](#migrations-via-command-line)
-- [Migrations via python code](#migrations-via-python-code)
-- [Run SQL scripts via command line](#run-sql-scripts-via-command-line) -->
+We can also use context for a blocking interface as seen below:
+
+```python
+from sblpy.connection import SurrealSyncConnection
+
+with SurrealSyncConnection(
+            host="localhost",
+            port=8000,              # set to 433 if using encrypted connection
+            user="root",
+            password="root",
+            namespace="default",    # if not provided the "default" namespace is used
+            database="default",     # if not provided the "default" database is used
+            max_size=2**20,         # if not provided the max size is 2**20 (1MB)
+            encrypted=False         # default is False, please ensure that server
+                                    # supports encryption with SSL certificates before setting to True
+        ) as connection:
+    conn.query("CREATE user:tobie SET name = 'Tobie';")
+    conn.query("CREATE user:jaime SET name = 'Jaime';")
+    outcome = conn.query("SELECT * FROM user;")
+```
+
+## Basic Async Interface
+
+We can create a one-off async connection with the following code:
+
+```python
+from sblpy.async_connection import AsyncSurrealConnection
+
+con = AsyncSurrealConnection(
+    "localhost",
+    8000,                   # set to 433 if using encrypted connection
+    "root",
+    "root",
+    namespace="default",    # if not provided the "default" namespace is used
+    database="default",     # if not provided the "default" database is used
+    max_size=2**20,         # if not provided the max size is 2**20 (1MB)
+    encrypted=False         # default is False, please ensure that server 
+                            # supports encryption with SSL certificates before setting to True
+)
+await con.query("CREATE user:tobie SET name = 'Tobie';")
+await con.query("CREATE user:jaime SET name = 'Jaime';")
+
+outcome = await con.query("SELECT * FROM user;")
+print(outcome)
+```
 
 ## Migrations via command line
 
@@ -301,3 +352,6 @@ There isn't much, this is just a super simple API. The less moving parts the les
 - [ ] Params testing and Documentation
 - [ ] CBOR data serialization
 - [ ] Native SurrealDB data types
+- [ ] Local Key value cache
+
+If you want to contribute to this project feel free to reach out on the python Discord channel for SurrealDB.

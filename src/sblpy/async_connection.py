@@ -1,19 +1,22 @@
 """
-A basic synchronous connection to a SurrealDB instance.
+A basic async connection to a SurrealDB instance.
 """
 import json
+from typing import Optional, Dict, Any
 import uuid
-from types import TracebackType
-from typing import Optional, Dict, Any, Type
 
-from websockets.sync.client import connect
+import websockets
 
 from sblpy.query import Query
 
 
-class SurrealSyncConnection:
+class AsyncSurrealConnection:
     """
-    A basic synchronous connection to a SurrealDB instance. To be used once and discarded.
+    A single async connection to a SurrealDB instance. To be used once and discarded.
+
+    # Notes
+    A new connection is created for each query. This is because the async websocket connection is
+    dropped
 
     Attributes:
         url: The URL of the database to process queries for.
@@ -21,9 +24,8 @@ class SurrealSyncConnection:
         password: The password to login on.
         namespace: The namespace that the connection will stick to.
         database: The database that the connection will stick to.
-        socket: The WebSocket connection to the SurrealDB instance.
+        max_size: The maximum size of the connection.
         id: The ID of the connection.
-        token: The token of the connection.
     """
     def __init__(
             self,
@@ -37,7 +39,7 @@ class SurrealSyncConnection:
             encrypted: bool = False
     ) -> None:
         """
-        The constructor for the SurrealSyncConnection class.
+        The constructor for the AsyncSurrealConnection class.
 
         :param host: (str) the url of the database to process queries for
         :param port: (int) the port that the database is listening on
@@ -58,20 +60,17 @@ class SurrealSyncConnection:
         self.password: str = password
         self.namespace: str = namespace
         self.database: str = database
-        self.socket = connect(self.url, max_size=max_size)
+        self.max_size: int = max_size
         self.id: str = str(uuid.uuid4())
-        self.token: Optional[str] = None
-        self.signin()
-        self.set_space()
 
-    def signin(self) -> None:
+    async def signin(self, socket) -> None:
         """
         Signs in to the SurrealDB instance.
 
         :return: None
         """
-        self.socket.send(json.dumps(self.sign_params, ensure_ascii=False))
-        response = json.loads(self.socket.recv())
+        await socket.send(json.dumps(self.sign_params, ensure_ascii=False))
+        response = json.loads(await socket.recv())
         if response.get("error") is not None:
             raise Exception(f"error signing in: {response.get('error')}")
         if response.get("result") is None:
@@ -81,16 +80,16 @@ class SurrealSyncConnection:
             raise Exception(f"no id signing in: {response}")
         self.id = response["id"]
 
-    def set_space(self) -> None:
+    async def set_space(self, socket) -> None:
         """
         Sets the namespace and database for the connection.
 
         :return: None
         """
-        self.socket.send(json.dumps(self.use_params, ensure_ascii=False))
-        _ = json.loads(self.socket.recv())
+        await socket.send(json.dumps(self.use_params, ensure_ascii=False))
+        _ = json.loads(await socket.recv())
 
-    def query(self, query: str, vars: Optional[Dict[str, Any]] = None) -> dict:
+    async def query(self, query: str, vars: Optional[Dict[str, Any]] = None) -> dict:
         """
         Queries the SurrealDB instance.
 
@@ -99,42 +98,21 @@ class SurrealSyncConnection:
         :return: The result of the query
         """
         query = Query(query, vars)
-        self.socket.send(json.dumps(query.query_params, ensure_ascii=False))
-        response = json.loads(self.socket.recv())
-        if response.get("result") is None:
-            raise Exception(f"error querying no result: {response}")
-        response = response["result"]
-        if response[0].get("status") is not None and response[0].get("status") == "ERR":
-            raise Exception(f"error querying: {response[0].get('result')}")
+
+        async with websockets.connect(self.url, max_size=self.max_size) as websocket:
+            # login and set the space
+            await self.signin(websocket)
+            await self.set_space(websocket)
+
+            # send and receive the query
+            await websocket.send(json.dumps(query.query_params, ensure_ascii=False))
+            response = json.loads(await websocket.recv())
+            if response.get("result") is None:
+                raise Exception(f"error querying no result: {response}")
+            response = response["result"]
+            if response[0].get("status") is not None and response[0].get("status") == "ERR":
+                raise Exception(f"error querying: {response[0].get('result')}")
         return response[0]["result"]
-
-    def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]] = None,
-            exc_value: Optional[Type[BaseException]] = None,
-            traceback: Optional[Type[TracebackType]] = None,
-    ) -> None:
-        """Close the connection when exiting the context manager.
-
-        Args:
-            exc_type: The type of the exception.
-            exc_value: The value of the exception.
-            traceback: The traceback of the exception.
-        """
-        self.socket.close()
-
-    def __enter__(self) -> "SurrealSyncConnection":
-        """No-op for entering the context manager since the connection is established during __init__."""
-        return self
-
-    def __exit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType]
-    ) -> None:
-        """Closes the connection when exiting the context manager."""
-        self.socket.close()
 
     @property
     def sign_params(self) -> dict:

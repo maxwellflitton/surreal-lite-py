@@ -1,5 +1,5 @@
 import asyncio
-from unittest import TestCase
+from unittest import TestCase, main
 
 from sblpy.pool.connection_pool import execute_pooled_query, client_pool, NUM_CLIENTS, shutdown_pool
 from sblpy.query import Query
@@ -20,7 +20,9 @@ class TestConnectionPool(TestCase):
                 8000,
                 "root",
                 "root",
-                number_of_clients=NUM_CLIENTS
+                number_of_clients=NUM_CLIENTS,
+                max_size=2**20,
+                encrypted=True
             ))
             for _ in range(100):
                 _ = await execute_pooled_query(Query("CREATE user:tobie SET name = 'Tobie';"))
@@ -34,3 +36,7 @@ class TestConnectionPool(TestCase):
                 _ = await execute_pooled_query(Query("DELETE user;"))
             await shutdown_pool(number_of_clients=NUM_CLIENTS)
         asyncio.run(run_test())
+
+
+if __name__ == "__main__":
+    main()
