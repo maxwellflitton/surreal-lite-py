@@ -1,6 +1,7 @@
 """
 Defines the MigrationRunner class, which is responsible for gathering and running migrations.
 """
+
 from typing import List
 
 from sblpy.connection import SurrealSyncConnection
@@ -19,11 +20,12 @@ class MigrationRunner:
         version: The current version of the database.
         index: The index of the migration to run.
     """
+
     def __init__(
-            self,
-            up_migrations: List[Migration],
-            down_migrations: List[Migration],
-            connection: SurrealSyncConnection
+        self,
+        up_migrations: List[Migration],
+        down_migrations: List[Migration],
+        connection: SurrealSyncConnection,
     ) -> None:
         """
         The constructor for the MigrationRunner class.
@@ -39,12 +41,14 @@ class MigrationRunner:
             connection.host,
             connection.port,
             connection.user,
-            connection.password
+            connection.password,
+            connection.namespace,
+            connection.database,
         )
         if self.version == 0:
             self.index = 0
         else:
-            self.index: int = self.version - 1
+            self.index: int = self.version
 
     def run(self) -> None:
         """
