@@ -2,6 +2,7 @@
 Sets up the pooled connection.
 """
 import json
+from sblpy.data.cbor import encode, decode
 
 
 async def setup_connection(
@@ -34,9 +35,9 @@ async def setup_connection(
         ]
     }
     # Send the sign-in message
-    await websocket.send(json.dumps(sign_params, ensure_ascii=False))
+    await websocket.send(encode(sign_params))
     response = await websocket.recv()
-    response = json.loads(response)
+    response = decode(response)
 
     if response.get("error") is not None:
         raise Exception(f"Error signing in: {response.get('error')}")
@@ -55,5 +56,5 @@ async def setup_connection(
         ]
     }
 
-    await websocket.send(json.dumps(use_params, ensure_ascii=False))
+    await websocket.send(encode(use_params))
     await websocket.recv()

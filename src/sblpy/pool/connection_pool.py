@@ -6,13 +6,13 @@ The outputs are raw because we need the connections to have as little chance
 of crashing. This means that you need to handle your output yourself.
 """
 import asyncio
-import json
 from uuid import uuid4
 
 import websockets
 
 from sblpy.pool.setup_config import setup_connection
 from sblpy.query import Query
+from sblpy.data.cbor import encode, decode
 
 # Dictionary to map request ids to asyncio.Future objects
 pending_responses = {}
@@ -57,7 +57,7 @@ async def websocket_client(
     else:
         url: str = f"ws://{host}:{port}/rpc"
     id = str(uuid4())
-    async with websockets.connect(url, max_size=max_size) as websocket:
+    async with websockets.connect(url, max_size=max_size, subprotocols=[websockets.Subprotocol("cbor")]) as websocket:
         print(f"Client {client_id} connected to {url}")
         await setup_connection(websocket, id, user, password, namespace, database)
         while True:
@@ -66,7 +66,8 @@ async def websocket_client(
             if message == "shutdown":
                 break
 
-            await websocket.send(json.dumps(message, ensure_ascii=False))
+            # await websocket.send(json.dumps(message, ensure_ascii=False))
+            await websocket.send(encode(message))
 
             # Await the response from the WebSocket server
             response = await websocket.recv()
@@ -153,4 +154,4 @@ async def execute_pooled_query(query: Query) -> dict:
     # Wait for the WebSocket client to get a response and set the future's result
     response = await response_future
 
-    return json.loads(response)
+    return decode(response)
