@@ -3,6 +3,7 @@ from unittest import TestCase, main
 
 from sblpy.pool.connection_pool import execute_pooled_query, client_pool, NUM_CLIENTS, shutdown_pool
 from sblpy.query import Query
+from sblpy.data.types.record_id import RecordID
 
 
 class TestConnectionPool(TestCase):
@@ -30,7 +31,10 @@ class TestConnectionPool(TestCase):
                 response = await execute_pooled_query(Query("SELECT * FROM user;"))
                 self.assertEqual(len(response["result"][0]["result"]), 2)
                 self.assertEqual(
-                    [{'id': 'user:jaime', 'name': 'Jaime'}, {'id': 'user:tobie', 'name': 'Tobie'}],
+                    [
+                        {'id': RecordID.parse('user:jaime'), 'name': 'Jaime'},
+                        {'id': RecordID.parse('user:tobie'), 'name': 'Tobie'}
+                    ],
                     response["result"][0]["result"]
                 )
                 _ = await execute_pooled_query(Query("DELETE user;"))

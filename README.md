@@ -7,6 +7,7 @@ An unofficial Python API for surrealDB that only has one dependency (websockets)
 - [Async Connection Pool Interface](#async-connection-pool-interface)
 - [Basic Blocking Interface](#basic-blocking-interface)
 - [Basic Async Interface](#basic-async-interface)
+- [CBOR data types](#CBOR-data-types)
 - [Migrations via command line](#migrations-via-command-line)
 - [Run SQL scripts via command line](#run-sql-scripts-via-command-line)
 - [Command line parameters](#command-line-parameters)
@@ -128,6 +129,29 @@ await con.query("CREATE user:jaime SET name = 'Jaime';")
 outcome = await con.query("SELECT * FROM user;")
 print(outcome)
 ```
+
+## CBOR data types
+
+As queries use CBOR for the serialization, Below are the objects housed in the `data` module:
+
+| **Data Type**          | **Description**                                                                                     | **Object Name**          | **Equality (`__eq__`) Conditions**                                                                                   |
+|-------------------------|-----------------------------------------------------------------------------------------------------|--------------------------|----------------------------------------------------------------------------------------------------------------------|
+| **RecordID**            | Represents a unique identifier for a record in a database table, with a table name and row ID.     | `RecordID`               | Equal if both `table_name` and `id` are the same.                                                                    |
+| **DateTimeCompact**     | Represents a compact datetime stored as nanoseconds since the epoch.                                | `DateTimeCompact`        | Equal if `timestamp` values are the same.                                                                            |
+| **Duration**            | Represents a duration of time stored as nanoseconds.                                               | `Duration`               | Equal if `elapsed` values are the same.                                                                              |
+| **Future**              | Represents a placeholder for a value that may be resolved in the future.                           | `Future`                 | Equal if `value` attributes are the same.                                                                            |
+| **GeometryPoint**       | Represents a single point in 2D space, with longitude and latitude.                                 | `GeometryPoint`          | Equal if both `longitude` and `latitude` are the same.                                                               |
+| **GeometryLine**        | Represents a line defined by two or more points.                                                   | `GeometryLine`           | Equal if all `geometry_points` in the line are the same.                                                             |
+| **GeometryPolygon**     | Represents a polygon defined by multiple lines.                                                    | `GeometryPolygon`        | Equal if all `geometry_lines` in the polygon are the same.                                                           |
+| **GeometryMultiPoint**  | Represents multiple points in 2D space.                                                            | `GeometryMultiPoint`     | Equal if all `geometry_points` are the same.                                                                         |
+| **GeometryMultiLine**   | Represents multiple lines.                                                                         | `GeometryMultiLine`      | Equal if all `geometry_lines` are the same.                                                                          |
+| **GeometryMultiPolygon**| Represents multiple polygons.                                                                      | `GeometryMultiPolygon`   | Equal if all `geometry_polygons` are the same.                                                                       |
+| **GeometryCollection**  | Represents a collection of various geometry objects.                                               | `GeometryCollection`     | Equal if all `geometries` in the collection are the same.                                                            |
+| **BoundIncluded**       | Represents an inclusive bound of a range.                                                          | `BoundIncluded`          | Equal if `value` attributes are the same.                                                                            |
+| **BoundExcluded**       | Represents an exclusive bound of a range.                                                          | `BoundExcluded`          | Equal if `value` attributes are the same.                                                                            |
+| **Range**               | Represents a range with a beginning and an ending bound.                                           | `Range`                  | Equal if both `begin` and `end` bounds are the same.                                                                 |
+| **Table**               | Represents a database table by its name.                                                           | `Table`                  | Equal if `table_name` attributes are the same.                                                                       |
+
 
 ## Migrations via command line
 
@@ -350,8 +374,8 @@ There isn't much, this is just a super simple API. The less moving parts the les
 - [ ] Auto-reconnect for Long-Lived Connections
 - [ ] Connection Retry Mechanism
 - [ ] Params testing and Documentation
-- [ ] CBOR data serialization
-- [ ] Native SurrealDB data types
+- [x] CBOR data serialization
+- [x] Native SurrealDB data types
 - [ ] Local Key value cache
 
 If you want to contribute to this project feel free to reach out on the python Discord channel for SurrealDB.

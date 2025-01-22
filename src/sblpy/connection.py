@@ -7,8 +7,10 @@ from types import TracebackType
 from typing import Optional, Dict, Any, Type
 
 from websockets.sync.client import connect
+from websockets import Subprotocol
 
 from sblpy.query import Query
+from sblpy.data.cbor import encode, decode
 
 
 class SurrealSyncConnection:
@@ -58,7 +60,7 @@ class SurrealSyncConnection:
         self.password: str = password
         self.namespace: str = namespace
         self.database: str = database
-        self.socket = connect(self.url, max_size=max_size)
+        self.socket = connect(self.url, max_size=max_size, subprotocols=[Subprotocol("cbor")])
         self.id: str = str(uuid.uuid4())
         self.token: Optional[str] = None
         self.signin()
@@ -70,8 +72,10 @@ class SurrealSyncConnection:
 
         :return: None
         """
-        self.socket.send(json.dumps(self.sign_params, ensure_ascii=False))
-        response = json.loads(self.socket.recv())
+        # self.socket.send(json.dumps(self.sign_params, ensure_ascii=False))
+        self.socket.send(encode(self.sign_params))
+        # response = json.loads(self.socket.recv())
+        response = decode(self.socket.recv())
         if response.get("error") is not None:
             raise Exception(f"error signing in: {response.get('error')}")
         if response.get("result") is None:
@@ -87,8 +91,10 @@ class SurrealSyncConnection:
 
         :return: None
         """
-        self.socket.send(json.dumps(self.use_params, ensure_ascii=False))
-        _ = json.loads(self.socket.recv())
+        # self.socket.send(json.dumps(self.use_params, ensure_ascii=False))
+        # _ = json.loads(self.socket.recv())
+        self.socket.send(encode(self.use_params))
+        _ = decode(self.socket.recv())
 
     def query(self, query: str, vars: Optional[Dict[str, Any]] = None) -> dict:
         """
@@ -99,8 +105,10 @@ class SurrealSyncConnection:
         :return: The result of the query
         """
         query = Query(query, vars)
-        self.socket.send(json.dumps(query.query_params, ensure_ascii=False))
-        response = json.loads(self.socket.recv())
+        # self.socket.send(json.dumps(query.query_params, ensure_ascii=False))
+        # response = json.loads(self.socket.recv())
+        self.socket.send(encode(query.query_params))
+        response = decode(self.socket.recv())
         if response.get("result") is None:
             raise Exception(f"error querying no result: {response}")
         response = response["result"]

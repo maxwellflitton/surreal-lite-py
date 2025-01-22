@@ -8,6 +8,7 @@ import uuid
 import websockets
 
 from sblpy.query import Query
+from sblpy.data.cbor import encode, decode
 
 
 class AsyncSurrealConnection:
@@ -69,8 +70,10 @@ class AsyncSurrealConnection:
 
         :return: None
         """
-        await socket.send(json.dumps(self.sign_params, ensure_ascii=False))
-        response = json.loads(await socket.recv())
+        # await socket.send(json.dumps(self.sign_params, ensure_ascii=False))
+        # response = json.loads(await socket.recv())
+        await socket.send(encode(self.sign_params))
+        response = decode(await socket.recv())
         if response.get("error") is not None:
             raise Exception(f"error signing in: {response.get('error')}")
         if response.get("result") is None:
@@ -86,8 +89,10 @@ class AsyncSurrealConnection:
 
         :return: None
         """
-        await socket.send(json.dumps(self.use_params, ensure_ascii=False))
-        _ = json.loads(await socket.recv())
+        # await socket.send(json.dumps(self.use_params, ensure_ascii=False))
+        # _ = json.loads(await socket.recv())
+        await socket.send(encode(self.use_params))
+        _ = decode(await socket.recv())
 
     async def query(self, query: str, vars: Optional[Dict[str, Any]] = None) -> dict:
         """
@@ -99,14 +104,14 @@ class AsyncSurrealConnection:
         """
         query = Query(query, vars)
 
-        async with websockets.connect(self.url, max_size=self.max_size) as websocket:
+        async with websockets.connect(self.url, max_size=self.max_size, subprotocols=[websockets.Subprotocol("cbor")]) as websocket:
             # login and set the space
             await self.signin(websocket)
             await self.set_space(websocket)
 
             # send and receive the query
-            await websocket.send(json.dumps(query.query_params, ensure_ascii=False))
-            response = json.loads(await websocket.recv())
+            await websocket.send(encode(query.query_params))
+            response = decode(await websocket.recv())
             if response.get("result") is None:
                 raise Exception(f"error querying no result: {response}")
             response = response["result"]

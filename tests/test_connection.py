@@ -2,6 +2,7 @@ from typing import List
 from unittest import TestCase, main
 
 from sblpy.connection import SurrealSyncConnection
+from sblpy.data.types.record_id import RecordID
 
 
 class TestSurrealSyncConnection(TestCase):
@@ -38,7 +39,10 @@ class TestSurrealSyncConnection(TestCase):
 
         self.assertEqual(len(outcome), 2)
         self.assertEqual(
-            [{'id': 'user:jaime', 'name': 'Jaime'}, {'id': 'user:tobie', 'name': 'Tobie'}],
+            [
+                {'id': RecordID.parse('user:jaime'), 'name': 'Jaime'},
+                {'id': RecordID.parse('user:tobie'), 'name': 'Tobie'}
+            ],
             outcome
         )
 
@@ -60,7 +64,10 @@ class TestSurrealSyncConnection(TestCase):
         outcome = self.connection.query("SELECT * FROM user;")
         self.assertEqual(len(outcome), 2)
         self.assertEqual(
-            [{'id': 'user:jaime', 'name': 'Jaime'}, {'id': 'user:tobie', 'name': 'Tobie'}],
+            [
+                {'id': RecordID.parse('user:jaime'), 'name': 'Jaime'},
+                {'id': RecordID.parse('user:tobie'), 'name': 'Tobie'}
+            ],
             outcome
         )
 
@@ -72,7 +79,10 @@ class TestSurrealSyncConnection(TestCase):
             outcome = conn.query("SELECT * FROM user;")
             self.assertEqual(len(outcome), 2)
             self.assertEqual(
-                [{'id': 'user:jaime', 'name': 'Jaime'}, {'id': 'user:tobie', 'name': 'Tobie'}],
+                [
+                    {'id': RecordID.parse('user:jaime'), 'name': 'Jaime'},
+                    {'id': RecordID.parse('user:tobie'), 'name': 'Tobie'}
+                ],
                 outcome
             )
 
@@ -98,7 +108,10 @@ class TestSurrealSyncConnection(TestCase):
         outcome = self.connection.query("SELECT * FROM user;")
         self.assertEqual(len(outcome), 2)
         self.assertEqual(
-            [{'id': 'user:jaime', 'name': 'Jaime'}, {'id': 'user:tobie', 'name': 'Tobie'}],
+            [
+                {'id': RecordID.parse('user:jaime'), 'name': 'Jaime'},
+                {'id': RecordID.parse('user:tobie'), 'name': 'Tobie'}
+            ],
             outcome
         )
 
